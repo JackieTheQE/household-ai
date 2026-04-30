@@ -11,7 +11,7 @@ services:
     restart: unless-stopped
 
     ports:
-      - "3000:8080"       # Access at http://localhost:3000
+      - "0.0.0.0:7070:8080"   # Access at http://localhost:7070 (or http://<your-ip>:7070)
 
     volumes:
       - open-webui-data:/app/backend/data          # Persistent chat history, users, settings

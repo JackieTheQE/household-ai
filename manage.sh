@@ -1,38 +1,41 @@
 #!/usr/bin/env bash
 # manage.sh — Day-to-day management for household-ai
-# Usage: ./manage.sh [start|stop|restart|update|logs|status|backup]
+# Usage: ./manage.sh [start|stop|restart|update|logs|status|backup|restore]
 set -euo pipefail
 
 CYAN='\033[0;36m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; RESET='\033[0m'
+
+COMPOSE="podman-compose -f podman-compose.yml"
+PORT=7070
 
 cmd="${1:-help}"
 
 case "$cmd" in
   start)
     echo -e "${GREEN}Starting household-ai...${RESET}"
-    podman-compose up -d
-    echo -e "${GREEN}Running at http://localhost:3000${RESET}"
+    $COMPOSE up -d
+    echo -e "${GREEN}Running at http://localhost:${PORT}${RESET}"
     ;;
 
   stop)
     echo -e "${YELLOW}Stopping household-ai...${RESET}"
-    podman-compose down
+    $COMPOSE down
     ;;
 
   restart)
-    podman-compose down && podman-compose up -d
+    $COMPOSE down && $COMPOSE up -d
     ;;
 
   update)
     echo -e "${CYAN}Pulling latest open-webui image...${RESET}"
     podman pull ghcr.io/open-webui/open-webui:main
-    podman-compose down
-    podman-compose up -d
+    $COMPOSE down
+    $COMPOSE up -d
     echo -e "${GREEN}Updated and restarted.${RESET}"
     ;;
 
   logs)
-    podman-compose logs -f --tail=100
+    $COMPOSE logs -f --tail=100
     ;;
 
   status)
@@ -42,7 +45,6 @@ case "$cmd" in
   backup)
     BACKUP_DIR="backups/$(date +%Y%m%d_%H%M%S)"
     mkdir -p "$BACKUP_DIR"
-    # Export the named volume
     podman volume export open-webui-data > "$BACKUP_DIR/open-webui-data.tar"
     echo -e "${GREEN}Backed up to $BACKUP_DIR/open-webui-data.tar${RESET}"
     ;;
@@ -50,9 +52,9 @@ case "$cmd" in
   restore)
     BACKUP_FILE="${2:-}"
     [[ -z "$BACKUP_FILE" ]] && { echo "Usage: ./manage.sh restore <backup.tar>"; exit 1; }
-    podman-compose down
+    $COMPOSE down
     podman volume import open-webui-data "$BACKUP_FILE"
-    podman-compose up -d
+    $COMPOSE up -d
     echo -e "${GREEN}Restored from $BACKUP_FILE${RESET}"
     ;;
 
@@ -68,6 +70,8 @@ case "$cmd" in
     echo "  ./manage.sh status         Show container status"
     echo "  ./manage.sh backup         Backup chat data to ./backups/"
     echo "  ./manage.sh restore <tar>  Restore from a backup"
+    echo ""
+    echo -e "  Accessible at: ${CYAN}http://localhost:${PORT}${RESET} or ${CYAN}http://<your-ip>:${PORT}${RESET}"
     echo ""
     ;;
 esac
