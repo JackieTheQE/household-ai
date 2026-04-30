@@ -15,7 +15,8 @@ services:
 
     volumes:
       - open-webui-data:/app/backend/data          # Persistent chat history, users, settings
-      - ./config/webui_config.json:/app/backend/data/config.json:ro  # Optional: pre-seed config
+      # config pre-seed disabled: open-webui migrates config.json on first boot which conflicts with :ro mount
+      # - ./config/webui_config.json:/app/backend/data/config.json:ro
 
     environment:
       # ── Ollama connection ──────────────────────────────────────────────────
