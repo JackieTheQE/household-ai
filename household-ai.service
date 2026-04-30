@@ -1,0 +1,32 @@
+# household-ai.service
+# Systemd user unit — auto-starts the stack on login/boot (rootless Podman)
+#
+# Install:
+#   mkdir -p ~/.config/systemd/user
+#   cp household-ai.service ~/.config/systemd/user/
+#   systemctl --user daemon-reload
+#   systemctl --user enable --now household-ai
+#   loginctl enable-linger $USER   # persist across logouts
+
+[Unit]
+Description=household-ai (open-webui + Ollama bridge)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=%h/household-ai
+
+ExecStart=/usr/bin/podman-compose up -d
+ExecStop=/usr/bin/podman-compose down
+
+# Restart policy — if a container crashes, systemd will restart the unit
+Restart=on-failure
+RestartSec=10s
+
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=default.target
